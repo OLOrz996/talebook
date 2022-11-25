@@ -268,7 +268,10 @@ class ScanList(BaseHandler):
         page = max(0, int(self.get_argument("page", 1)) - 1)
         sort = self.get_argument("sort", "access_time")
         desc = self.get_argument("desc", "desc")
-        logging.debug("num=%d, page=%d, sort=%s, desc=%s" % (num, page, sort, desc))
+        status = self.get_argument("status", "all")
+        search = self.get_argument("search", "")
+
+        logging.debug("num=%d, page=%d, sort=%s, desc=%s, status=%status" % (num, page, sort, desc, status))
 
         # get order by query args
         order = {
@@ -280,6 +283,10 @@ class ScanList(BaseHandler):
         }.get(sort, ScanFile.create_time)
         order = order.asc() if desc == "false" else order.desc()
         query = self.session.query(ScanFile).order_by(order)
+        if status != "all":
+            query = query.filter(ScanFile.status == status)
+        if search != "":
+            query = query.filter(ScanFile.path.like('%{0}%'.format(search)))
         total = query.count()
         start = page * num
 
